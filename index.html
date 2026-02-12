@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Walentynkowa Gra ❤️</title>
+
+<style>
+body{
+  margin:0;
+  min-height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#0f0f1a;
+  font-family:Arial,sans-serif;
+  overflow:hidden;
+  color:white;
+}
+
+/* SERCA */
+.heart{
+  position:absolute;
+  color:#ff6fa5;
+  animation:fall linear forwards;
+  opacity:0.7;
+}
+
+@keyframes fall{
+  from{transform:translateY(-50px);}
+  to{transform:translateY(110vh);opacity:0;}
+}
+
+/* FAJERWERKI */
+.firework{
+  position:absolute;
+  width:6px;
+  height:6px;
+  border-radius:50%;
+  background:white;
+  animation:explode 1s forwards;
+}
+
+@keyframes explode{
+  from{transform:scale(1);opacity:1;}
+  to{transform:scale(15);opacity:0;}
+}
+
+/* EKRANY */
+.screen{
+  display:none;
+  flex-direction:column;
+  align-items:center;
+}
+
+#gameScreen{display:flex;}
+
+h1{margin:10px;}
+
+/* PUZZLE */
+#puzzle{
+  width:400px;
+  height:400px;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(4,1fr);
+  gap:2px;
+  background:white;
+  padding:5px;
+  border-radius:10px;
+}
+
+.piece{
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M50 85 L15 45 A20 20 0 1 1 50 25 A20 20 0 1 1 85 45 Z' fill='%23ff1e56'/></svg>");
+  background-size:400px 400px;
+  cursor:grab;
+}
+
+/* PRZYCISKI */
+button{
+  padding:10px 25px;
+  margin-top:15px;
+  border:none;
+  border-radius:20px;
+  background:#ff6fa5;
+  color:white;
+  cursor:pointer;
+  font-weight:bold;
+  font-size:16px;
+}
+
+button:hover{opacity:0.8;}
+
+/* WYGRANE */
+#winText,#finalText{
+  font-size:36px;
+  margin:15px;
+}
+
+#paw{
+  font-size:70px;
+  animation:wave 1s infinite alternate;
+}
+
+@keyframes wave{
+  from{transform:rotate(-20deg);}
+  to{transform:rotate(20deg);}
+}
+
+/* GRA KOT */
+#catGame{
+  position:relative;
+  width:400px;
+  height:500px;
+  background:#1a1a2e;
+  overflow:hidden;
+  border-radius:15px;
+}
+
+#cat{
+  position:absolute;
+  font-size:35px;
+  left:50px;
+  top:200px;
+}
+
+.pipe{
+  position:absolute;
+  width:60px;
+  background:#5c4033;
+}
+
+#score{
+  margin:10px;
+  font-size:20px;
+}
+
+</style>
+</head>
+<body>
+
+<audio loop autoplay>
+  <source src="https://cdn.pixabay.com/download/audio/2022/03/15/audio_0e8c86df1f.mp3" type="audio/mpeg">
+</audio>
+
+<!-- PUZZLE -->
+<div id="gameScreen" class="screen">
+  <h1>Ułóż serce ❤️</h1>
+  <div id="puzzle"></div>
+</div>
+
+<!-- WALENTYNKI -->
+<div id="winScreen" class="screen">
+  <div id="winText">Słodkich Walentynek 💖</div>
+  <div id="paw">🐾</div>
+  <button onclick="startCatGame()">Przejdź dalej ➜</button>
+</div>
+
+<!-- GRA KOT -->
+<div id="catScreen" class="screen">
+  <h1>Leć kotkiem 😺</h1>
+  <div id="score">0 / 10</div>
+  <div id="catGame">
+    <div id="cat">😺</div>
+  </div>
+  <p>Klik / Spacja = skok</p>
+</div>
+
+<!-- FINAŁ -->
+<div id="finalScreen" class="screen">
+  <div id="finalText">Kocham Cię 💕</div>
+  <h2>Słodkich Walentynek ❤️</h2>
+</div>
+
+<script>
+
+const gameScreen=document.getElementById("gameScreen");
+const winScreen=document.getElementById("winScreen");
+const catScreen=document.getElementById("catScreen");
+const finalScreen=document.getElementById("finalScreen");
+const scoreDiv=document.getElementById("score");
+
+/* SERCA */
+setInterval(()=>{
+  const h=document.createElement("div");
+  h.className="heart";
+  h.innerText="❤️";
+  h.style.left=Math.random()*100+"vw";
+  h.style.fontSize=15+Math.random()*25+"px";
+  h.style.animationDuration=4+Math.random()*3+"s";
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),7000);
+},300);
+
+/* FAJERWERKI */
+function fireworks(){
+  setInterval(()=>{
+    const f=document.createElement("div");
+    f.className="firework";
+    f.style.left=Math.random()*100+"vw";
+    f.style.top=Math.random()*100+"vh";
+    f.style.background=`hsl(${Math.random()*360},100%,70%)`;
+    document.body.appendChild(f);
+    setTimeout(()=>f.remove(),1000);
+  },300);
+}
+
+/* PUZZLE */
+const puzzle=document.getElementById("puzzle");
+let dragged=null;
+const total=16;
+
+function createPuzzle(){
+  puzzle.innerHTML="";
+  for(let i=0;i<total;i++){
+    const p=document.createElement("div");
+    p.className="piece";
+
+    const x=(i%4)*-100;
+    const y=Math.floor(i/4)*-100;
+
+    p.style.backgroundPosition=`${x}px ${y}px`;
+    p.dataset.id=i;
+    p.draggable=true;
+
+    p.ondragstart=()=>dragged=p;
+    p.ondragover=e=>e.preventDefault();
+    p.ondrop=()=>{
+      if(dragged&&dragged!==p){
+        swap(dragged,p);
+        checkWin();
+      }
+    }
+
+    puzzle.appendChild(p);
+  }
+}
+
+function swap(a,b){
+  let t=a.style.backgroundPosition;
+  let d=a.dataset.id;
+
+  a.style.backgroundPosition=b.style.backgroundPosition;
+  a.dataset.id=b.dataset.id;
+
+  b.style.backgroundPosition=t;
+  b.dataset.id=d;
+}
+
+function shuffle(){
+  const arr=[...document.querySelectorAll(".piece")];
+  for(let i=arr.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    swap(arr[i],arr[j]);
+  }
+}
+
+function checkWin(){
+  const arr=document.querySelectorAll(".piece");
+  let ok=true;
+
+  arr.forEach((p,i)=>{
+    if(Number(p.dataset.id)!==i) ok=false;
+  });
+
+  if(ok){
+    gameScreen.style.display="none";
+    winScreen.style.display="flex";
+  }
+}
+
+/* GRA KOT */
+const cat=document.getElementById("cat");
+const catGame=document.getElementById("catGame");
+
+let catY=200;
+let vel=0;
+let gravity=0.5;
+let pipes=[];
+let running=false;
+let score=0;
+
+function startCatGame(){
+  winScreen.style.display="none";
+  catScreen.style.display="flex";
+  resetCat();
+}
+
+function resetCat(){
+  catY=200;
+  vel=0;
+  score=0;
+  scoreDiv.innerText="0 / 10";
+
+  pipes.forEach(p=>p.top.remove());
+  pipes.forEach(p=>p.bot.remove());
+  pipes=[];
+  running=true;
+}
+
+function jump(){vel=-8;}
+
+function createPipe(){
+  const gap=150;
+  const topH=50+Math.random()*200;
+
+  const top=document.createElement("div");
+  const bot=document.createElement("div");
+
+  top.className="pipe";
+  bot.className="pipe";
+
+  top.style.height=topH+"px";
+  top.style.top="0";
+
+  bot.style.height=(500-topH-gap)+"px";
+  bot.style.bottom="0";
+
+  top.style.left="400px";
+  bot.style.left="400px";
+
+  catGame.appendChild(top);
+  catGame.appendChild(bot);
+
+  pipes.push({top,bot,x:400,passed:false});
+}
+
+function gameLoop(){
+  if(!running) return;
+
+  vel+=gravity;
+  catY+=vel;
+  cat.style.top=catY+"px";
+
+  if(catY<0||catY>460) resetCat();
+
+  pipes.forEach(p=>{
+    p.x-=2.5;
+    p.top.style.left=p.x+"px";
+    p.bot.style.left=p.x+"px";
+
+    if(!p.passed && p.x<80){
+      p.passed=true;
+      score++;
+      scoreDiv.innerText=score+" / 10";
+
+      if(score>=10){
+        finishGame();
+      }
+    }
+
+    const catRect=cat.getBoundingClientRect();
+    const t=p.top.getBoundingClientRect();
+    const b=p.bot.getBoundingClientRect();
+
+    if(inter(catRect,t)||inter(catRect,b)) resetCat();
+  });
+
+  pipes=pipes.filter(p=>p.x>-80);
+  requestAnimationFrame(gameLoop);
+}
+}
+
+function finishGame(){
+  running=false;
+  catScreen.style.display="none";
+  finalScreen.style.display="flex";
+  fireworks();
+}
+
+function inter(a,b){
+  return!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom);
+}
+
+setInterval(()=>{if(running) createPipe();},2000);
+
+window.addEventListener("click",jump);
+window.addEventListener("keydown",e=>{if(e.code==="Space") jump();});
+
+/* START */
+createPuzzle();
+shuffle();
+gameLoop();
+
+</script>
+</body>
+</html>
